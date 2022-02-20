@@ -12,7 +12,7 @@ class Square extends React.Component {
     this.props.onClick(this.props.num);
   }
   render() {
-    let clicked = this.props.squares[this.props.num]? true : false;
+    let clicked = this.props.squares[this.props.num] ? true : false;
     return (
       <button className="square" onClick={this.onClick} disabled={this.props.winner || clicked}>
         {this.props.squares[this.props.num]}
@@ -28,43 +28,59 @@ class Board extends React.Component {
       squares: Array(9).fill(null),
       xIsNext: true,
       winner: null,
+      history: [],
     };
   }
+
   handleReset() {
     this.setState({
       squares: Array(9).fill(null),
       winner: null,
+      history: [],
+      xIsNext: true,
     })
+  }
+  cheakWin(squares) {
+    let winPatterns = [
+      [0, 1, 2], [3, 4, 5], [6, 7, 8],
+      [0, 3, 6], [1, 4, 7], [2, 5, 8],
+      [0, 4, 8], [2, 4, 6]
+    ];
+    let result = winPatterns.map((pattern) => {
+      if (squares[pattern[0]] === squares[pattern[1]] && squares[pattern[1]] === squares[pattern[2]] && squares[pattern[0]] !== null) {
+        return squares[pattern[0]];
+      } else {
+        return null;
+      }
+    })
+
+    let winner =  result.filter((item) => item !== null)[0];
+    console.log(winner);
+    if (winner) {
+      this.setState({ winner: winner });
+    } else {
+      this.setState({ winner: null })
+    }
   }
 
   handleClick(i) {
-    let cheakWin = function(squares) {
-      let winPatterns = [
-        [0,1,2],[3,4,5],[6,7,8],
-        [0,3,6],[1,4,7],[2,5,8],
-        [0,4,8], [2,4,6]
-      ];
-      let result = winPatterns.map((pattern)=> {
-        if(squares[pattern[0]] === squares[pattern[1]] && squares[pattern[1]] === squares[pattern[2]] && squares[pattern[0]] !== null) {
-          return squares[pattern[0]];
-        } else {
-          return null;
-        }
-      })
-      return result.filter((item) => item !== null)[0];
-    }
-
     let tmpsquares = this.state.squares.slice();
     tmpsquares[i] = this.state.xIsNext ? 'X' : 'O';
     // switch turn
     this.setState({ xIsNext: !this.state.xIsNext });
     this.setState({ squares: tmpsquares });
 
+    // push history
+    this.pushHistory(tmpsquares);
     // check win
-    let winner = cheakWin(tmpsquares);
-    if(winner) {
-      this.setState({winner : winner});
-    }
+    this.cheakWin(tmpsquares);
+
+  }
+
+  pushHistory(square) {
+    let history = this.state.history.slice();
+    history.push(square);
+    this.setState({ history: history });
   }
 
   rendSquare(i) {
@@ -74,8 +90,22 @@ class Board extends React.Component {
   render() {
     return (
       <Fragment>
+        <button className="reset" onClick={() => this.handleReset()}>Reset</button>
+
         <div className="board-row">
           now is the turn of <b>{this.state.xIsNext ? "X" : "O"}</b>
+        </div>
+        <div className="board-row">
+          {this.state.winner ? <div>Game ended, Winner is <b>{this.state.winner}</b></div> : <br></br>}
+        </div>
+        <div className="board-row">
+          <ul>
+            {this.state.history.map((square, i) => {
+              return <li key={i}>
+                <button className="history" onClick={() => {this.setState({ squares: square });this.cheakWin(square);}}>Back to {i}</button>
+              </li>
+            })}
+          </ul>
         </div>
         <table >
           <tbody>
@@ -96,11 +126,6 @@ class Board extends React.Component {
             </tr>
           </tbody>
         </table>
-        <div className="board-row">
-          {this.state.winner ? <div>Winner is <b>{this.state.winner}</b></div> : null}
-        </div>
-
-        <button className="reset" onClick={() => this.handleReset()}>Reset</button>
       </Fragment>
     )
   }
@@ -121,6 +146,7 @@ function App() {
         >
           Learn React
         </a>
+        <br></br>
         <Board></Board>
 
       </header>
